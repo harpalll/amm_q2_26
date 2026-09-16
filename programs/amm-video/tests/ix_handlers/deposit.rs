@@ -11,8 +11,38 @@ use {
     solana_signer::Signer,
 };
 
+/// Create + fund the user's X/Y associated token accounts. Call once per test;
+/// the pure ix builder below can then be reused for follow-up deposits.
+pub fn fund_user(
+    svm: &mut LiteSVM,
+    payer: &Keypair,
+    mint_x: &Pubkey,
+    mint_y: &Pubkey,
+    amount_x: u64,
+    amount_y: u64,
+) -> (Pubkey, Pubkey) {
+    let user = payer.pubkey();
+
+    let user_x = CreateAssociatedTokenAccount::new(svm, payer, mint_x)
+        .owner(&user)
+        .send()
+        .unwrap();
+    MintTo::new(svm, payer, mint_x, &user_x, amount_x)
+        .send()
+        .unwrap();
+
+    let user_y = CreateAssociatedTokenAccount::new(svm, payer, mint_y)
+        .owner(&user)
+        .send()
+        .unwrap();
+    MintTo::new(svm, payer, mint_y, &user_y, amount_y)
+        .send()
+        .unwrap();
+
+    (user_x, user_y)
+}
+
 pub fn create_deposit_ix(
-    mut svm: &mut LiteSVM,
     payer: &Keypair,
     mint_x: Pubkey,
     mint_y: Pubkey,
@@ -20,33 +50,21 @@ pub fn create_deposit_ix(
     config: Pubkey,
     vault_x: Pubkey,
     vault_y: Pubkey,
+    user_x: Pubkey,
+    user_y: Pubkey,
+    amount: u64,
+    max_x: u64,
+    max_y: u64,
 ) -> Instruction {
     let user = payer.pubkey();
-
-    let user_x = CreateAssociatedTokenAccount::new(&mut svm, &payer, &mint_x)
-        .owner(&user)
-        .send()
-        .unwrap();
-    MintTo::new(&mut svm, &payer, &mint_x, &user_x, 1000000000)
-        .send()
-        .unwrap();
-
-    let user_y = CreateAssociatedTokenAccount::new(&mut svm, &payer, &mint_y)
-        .owner(&user)
-        .send()
-        .unwrap();
-    MintTo::new(&mut svm, &payer, &mint_y, &user_y, 1000000000)
-        .send()
-        .unwrap();
-
     let user_lp = associated_token::get_associated_token_address(&user, &mint_lp);
 
     Instruction::new_with_bytes(
         amm_video::id(),
         &amm_video::instruction::Deposit {
-            amount: 100_000_000,
-            max_x: 200_000_000,
-            max_y: 200_000_000,
+            amount,
+            max_x,
+            max_y,
         }
         .data(),
         amm_video::accounts::Deposit {

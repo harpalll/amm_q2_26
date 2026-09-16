@@ -20,15 +20,20 @@ pub fn create_initialise_ix(
     mint_lp: Pubkey,
     vault_x: Pubkey,
     vault_y: Pubkey,
+    seed: u64,
+    fee: u16,
+    authority: Option<Pubkey>,
+    treasury: Pubkey,
 ) -> Instruction {
     let maker = payer.pubkey();
 
     Instruction::new_with_bytes(
         amm_video::id(),
         &amm_video::instruction::Initialize {
-            seed: 123,
-            fee: 30,
-            authority: Some(maker),
+            seed,
+            fee,
+            authority,
+            treasury,
         }
         .data(),
         amm_video::accounts::Initialize {

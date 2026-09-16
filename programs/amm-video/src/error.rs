@@ -35,6 +35,10 @@ pub enum AmmError {
     NoAuthoritySet,
     #[msg("Invalid amount.")]
     InvalidAmount,
+    #[msg("Invalid treasury.")]
+    InvalidTreasury,
+    #[msg("Pool is already locked.")]
+    AlreadyLocked,
     #[msg("Invalid precision.")]
     InvalidPrecision,
     #[msg("Insufficient balance.")]

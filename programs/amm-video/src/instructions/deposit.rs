@@ -5,7 +5,7 @@ use anchor_spl::{
 };
 use constant_product_curve::ConstantProduct;
 
-use crate::{error::AmmError, state::Config};
+use crate::{error::AmmError, state::Config, PRECISION};
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
@@ -81,7 +81,7 @@ impl<'info> Deposit<'info> {
                     self.vault_y.amount,
                     self.mint_lp.supply,
                     amount,
-                    6,
+                    PRECISION,
                 )
                 .unwrap();
 
